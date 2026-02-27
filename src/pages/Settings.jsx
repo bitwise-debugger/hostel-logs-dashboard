@@ -4,24 +4,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from '../components/ui/toast';
+import PageHeader from '../components/PageHeader';
 
 const Settings = () => {
   const [scanLogsPath, setScanLogsPath] = useState('');
   const [allotmentsPath, setAllotmentsPath] = useState('');
+  const [lateEntryHour, setLateEntryHour] = useState('22');
 
   useEffect(() => {
     // Load saved paths from localStorage
     const savedScanLogsPath = localStorage.getItem('scanLogsPath') || '/scan_logs.csv';
     const savedAllotmentsPath = localStorage.getItem('allotmentsPath') || '/allotments.csv';
+    const savedLateEntryHour = localStorage.getItem('lateEntryHour') || '22';
     
     setScanLogsPath(savedScanLogsPath);
     setAllotmentsPath(savedAllotmentsPath);
+    setLateEntryHour(savedLateEntryHour);
   }, []);
 
   const handleSave = () => {
     // Save paths to localStorage
     localStorage.setItem('scanLogsPath', scanLogsPath);
     localStorage.setItem('allotmentsPath', allotmentsPath);
+    localStorage.setItem('lateEntryHour', lateEntryHour);
     
     toast.success('Settings saved successfully! Please refresh the page to apply changes.');
   };
@@ -29,17 +34,19 @@ const Settings = () => {
   const handleReset = () => {
     setScanLogsPath('/scan_logs.csv');
     setAllotmentsPath('/allotments.csv');
-    toast.info('Paths reset to default values');
+    setLateEntryHour('22');
+    toast.info('Settings reset to default values');
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">Configure application settings and file paths</p>
-      </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <PageHeader 
+        title="Settings" 
+        description="Configure application settings and file paths"
+      />
 
-      <Card>
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        <Card>
         <CardHeader>
           <CardTitle>Data Source Configuration</CardTitle>
           <CardDescription>
@@ -92,6 +99,30 @@ const Settings = () => {
             </p>
           </div>
 
+          {/* Late Entry Time */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Late Entry Time (Hour)
+            </label>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="number"
+                min="0"
+                max="23"
+                value={lateEntryHour}
+                onChange={(e) => setLateEntryHour(e.target.value)}
+                placeholder="22"
+                className="w-32"
+              />
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                :00 (24-hour format)
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Default: 22 (10:00 PM). Entries after this hour will be marked as "Late Entry"
+            </p>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button onClick={handleSave} className="gap-2">
@@ -129,11 +160,12 @@ const Settings = () => {
             <code className="text-sm text-cyan-600 dark:text-cyan-400">{scanLogsPath}</code>
           </div>
           <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Allotments:</span>
-            <code className="text-sm text-cyan-600 dark:text-cyan-400">{allotmentsPath}</code>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Late Entry Time:</span>
+            <code className="text-sm text-cyan-600 dark:text-cyan-400">{lateEntryHour}:00 ({lateEntryHour > 12 ? `${lateEntryHour - 12}:00 PM` : `${lateEntryHour}:00 AM`})</code>
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

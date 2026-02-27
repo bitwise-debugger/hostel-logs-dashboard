@@ -1,7 +1,31 @@
-import { Users, LayoutDashboard, Settings, FileText, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, LayoutDashboard, Settings, FileText, Bell, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useState, useEffect } from 'react';
 
 const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check for saved dark mode preference
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'students', icon: Users, label: 'Students' },
@@ -19,7 +43,7 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-              SMART WARDEN<br/>
+              SCANNER<br/>
               <span className="text-cyan-600">DASHBOARD</span>
             </h1>
             <p className="text-xs text-slate-500 mt-1">UOG Hostel Management</p>
@@ -63,20 +87,17 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
       </nav>
 
       <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-        <div className={cn(
-          "flex items-center gap-3 px-2 py-2",
-          collapsed && "justify-center"
-        )}>
-          <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            MW
-          </div>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">Md Mohsin</p>
-              <p className="text-xs text-slate-500 truncate">Warden</p>
-            </div>
+        <button
+          onClick={toggleDarkMode}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-50",
+            collapsed && "justify-center"
           )}
-        </div>
+          title={collapsed ? (darkMode ? 'Light Mode' : 'Dark Mode') : undefined}
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {!collapsed && <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
+        </button>
       </div>
     </div>
   );

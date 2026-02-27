@@ -114,7 +114,8 @@ const Reports = ({ logs }) => {
 
   // Late Entries Data
   const lateEntriesData = useMemo(() => {
-    const lateCount = filteredLogs.filter(log => moment(log.DateTime).hour() >= 22).length;
+    const lateEntryHour = parseInt(localStorage.getItem('lateEntryHour') || '22');
+    const lateCount = filteredLogs.filter(log => moment(log.DateTime).hour() >= lateEntryHour).length;
     const onTimeCount = filteredLogs.length - lateCount;
     const total = filteredLogs.length;
     return [
@@ -125,6 +126,7 @@ const Reports = ({ logs }) => {
 
   // Summary Stats
   const stats = useMemo(() => {
+    const lateEntryHour = parseInt(localStorage.getItem('lateEntryHour') || '22');
     const peakHour = peakTimesData.reduce((max, curr) => 
       curr.count > max.count ? curr : max
     , { count: 0, hour: 'N/A' });
@@ -133,7 +135,7 @@ const Reports = ({ logs }) => {
       ? moment(endDate).diff(moment(startDate), 'days') + 1 
       : 7;
     const avgPerDay = daysCount > 0 ? (filteredLogs.length / daysCount).toFixed(0) : '0';
-    const lateEntries = filteredLogs.filter(log => moment(log.DateTime).hour() >= 22).length;
+    const lateEntries = filteredLogs.filter(log => moment(log.DateTime).hour() >= lateEntryHour).length;
     const invalidEntries = filteredLogs.filter(l => l.Status !== 'Boarder' && l.Status !== 'Non-Boarder').length;
 
     return {

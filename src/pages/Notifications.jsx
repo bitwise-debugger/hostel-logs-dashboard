@@ -2,6 +2,7 @@ import { Bell, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import moment from 'moment';
+import PageHeader from '../components/PageHeader';
 
 const Notifications = () => {
   const notifications = [
@@ -82,63 +83,65 @@ const Notifications = () => {
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Notifications</h1>
-          <p className="text-sm text-slate-500 mt-1">Stay updated with system alerts and updates</p>
-        </div>
-        <Badge variant="default">
-          {notifications.filter(n => !n.read).length} Unread
-        </Badge>
-      </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <PageHeader 
+        title="Notifications" 
+        description="Stay updated with system alerts and updates"
+        actions={
+          <Badge variant="default">
+            {notifications.filter(n => !n.read).length} Unread
+          </Badge>
+        }
+      />
 
-      <div className="space-y-3">
-        {notifications.map((notification) => (
-          <Card 
-            key={notification.id}
-            className={`${!notification.read ? 'border-cyan-200 dark:border-cyan-900 bg-cyan-50/50 dark:bg-cyan-950/20' : ''}`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-white dark:bg-slate-900 rounded-lg">
-                  {getIcon(notification.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                      {notification.title}
-                    </h3>
-                    {!notification.read && (
-                      <Badge variant="default" className="flex-shrink-0">New</Badge>
-                    )}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="space-y-3">
+          {notifications.map((notification) => (
+            <Card 
+              key={notification.id}
+              className={`${!notification.read ? 'border-cyan-200 dark:border-cyan-900 bg-cyan-50/50 dark:bg-cyan-950/20' : ''}`}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-white dark:bg-slate-900 rounded-lg">
+                    {getIcon(notification.type)}
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {notification.time.fromNow()}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                        {notification.title}
+                      </h3>
+                      {!notification.read && (
+                        <Badge variant="default" className="flex-shrink-0">New</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {notification.time.fromNow()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {notifications.length === 0 && (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Bell className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-            <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
-              No Notifications
-            </p>
-            <p className="text-sm text-slate-500">
-              You're all caught up!
-            </p>
-          </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
+
+        {notifications.length === 0 && (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Bell className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+              <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
+                No Notifications
+              </p>
+              <p className="text-sm text-slate-500">
+                You're all caught up!
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

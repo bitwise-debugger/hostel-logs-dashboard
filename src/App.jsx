@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import Papa from 'papaparse';
 import moment from 'moment';
-import { Clock, Users, ShieldAlert, AlertTriangle, Search, Calendar, X } from 'lucide-react';
+import { Clock, Users, ShieldAlert, AlertTriangle, Search, Calendar, LayoutGrid, List } from 'lucide-react';
 
 import Sidebar from './components/Sidebar';
+import PageHeader from './components/PageHeader';
 import StatsCard from './components/StatsCard';
 import LogsTable from './components/LogsTable';
+import LogsGrid from './components/LogsGrid';
 import ImageModal from './components/ImageModal';
+import DateRangeModal from './components/DateRangeModal';
 import Students from './pages/Students';
 import Reports from './pages/Reports';
 import Notifications from './pages/Notifications';
@@ -15,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from './components/ui/tabs';
 import { toast } from './components/ui/toast';
 import { Input } from './components/ui/input';
 import { Button } from './components/ui/button';
+import { Card, CardContent } from './components/ui/card';
 
 const App = () => {
   const [logs, setLogs] = useState([]);
@@ -28,6 +32,10 @@ const App = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'time', direction: 'desc' });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -82,8 +90,23 @@ const App = () => {
   const filteredLogs = useMemo(() => {
     let filtered = logs;
 
-    // Date filter
-    if (selectedDate) {
+    // Date range filter (takes precedence over single date)
+    if (startDate || endDate) {
+      filtered = filtered.filter(log => {
+        const logDate = moment(log.DateTime).format('YYYY-MM-DD');
+        
+        if (startDate && endDate) {
+          return logDate >= startDate && logDate <= endDate;
+        } else if (startDate) {
+          return logDate >= startDate;
+        } else if (endDate) {
+          return logDate <= endDate;
+        }
+        
+        return true;
+      });
+    } else if (selectedDate) {
+      // Single date filter (only if no date range)
       filtered = filtered.filter(log => {
         const logDate = moment(log.DateTime).format('YYYY-MM-DD');
         return logDate === selectedDate;
@@ -92,9 +115,10 @@ const App = () => {
 
     // Tab filter
     if (filterTab === 'late') {
+      const lateEntryHour = parseInt(localStorage.getItem('lateEntryHour') || '22');
       filtered = filtered.filter(log => {
         const hour = moment(log.DateTime).hour();
-        return hour >= 22;
+        return hour >= lateEntryHour;
       });
     } else if (filterTab === 'boarder') {
       filtered = filtered.filter(log => log.Status === 'Boarder');
@@ -120,7 +144,7 @@ const App = () => {
     }
 
     return filtered;
-  }, [logs, searchTerm, filterTab, allotments, selectedDate]);
+  }, [logs, searchTerm, filterTab, allotments, selectedDate, startDate, endDate]);
 
   // Sort logs
   const sortedLogs = useMemo(() => {
@@ -191,10 +215,11 @@ const App = () => {
       ? moment().hour(peakHour).minute(0).format('hh:00 A')
       : 'N/A';
 
-    // Calculate late entries (after 10 PM)
+    // Calculate late entries (after configured hour)
+    const lateEntryHour = parseInt(localStorage.getItem('lateEntryHour') || '22');
     const lateEntries = logs.filter(log => {
       const hour = moment(log.DateTime).hour();
-      return hour >= 22;
+      return hour >= lateEntryHour;
     }).length;
 
     return {
@@ -221,6 +246,35 @@ const App = () => {
     }
   };
 
+  const clearDateRange = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setStartDate('');
+      setEndDate('');
+      setSelectedDate(null);
+      setProcessing(false);
+      toast.success('Showing all records');
+    }, 100);
+  };
+
+  const handleDateRangeApply = (start, end) => {
+    setIsDateModalOpen(false);
+    setProcessing(true);
+    
+    setTimeout(() => {
+      setStartDate(start);
+      setEndDate(end);
+      setSelectedDate(null);
+      setProcessing(false);
+      
+      if (start || end) {
+        toast.success('Date range filter applied');
+      } else {
+        toast.success('Showing all records');
+      }
+    }, 100);
+  };
+
   const handleSort = (key) => {
     setProcessing(true);
     setTimeout(() => {
@@ -236,6 +290,14 @@ const App = () => {
     setProcessing(true);
     setTimeout(() => {
       setFilterTab(value);
+      setProcessing(false);
+    }, 100);
+  };
+
+  const handleViewModeChange = (mode) => {
+    setProcessing(true);
+    setTimeout(() => {
+      setViewMode(mode);
       setProcessing(false);
     }, 100);
   };
@@ -269,11 +331,45 @@ const App = () => {
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Page Title Header */}
-        <div className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">Monitor and manage hostel scan entries</p>
-        </div>
+        <PageHeader 
+          title="Dashboard" 
+          description="Monitor and manage hostel scan entries"
+          search={
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Input
+                  type="text"
+                  placeholder="Search by name or roll number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="pl-10"
+                />
+              </div>
+              <Button onClick={handleSearch}>
+                Search
+              </Button>
+            </div>
+          }
+          actions={
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsDateModalOpen(true)}
+                className="gap-2"
+              >
+                <Calendar size={16} />
+                {startDate || endDate ? 'Change Date Range' : 'Select Date Range'}
+              </Button>
+              {(startDate || endDate) && (
+                <Button variant="outline" onClick={clearDateRange}>
+                  View All Scans
+                </Button>
+              )}
+            </div>
+          }
+        />
 
         <div className="flex-1 overflow-hidden p-6 space-y-6">
           {/* Static Stats Cards */}
@@ -302,46 +398,6 @@ const App = () => {
             />
           </div>
 
-          {/* Search and Date Filter */}
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 max-w-md relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <Input
-                  type="text"
-                  placeholder="Search by name or roll number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="pl-10"
-                />
-              </div>
-              <Button onClick={handleSearch}>
-                Search
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={18} />
-                  <Input
-                    type="date"
-                    value={selectedDate || ''}
-                    onChange={(e) => setSelectedDate(e.target.value || null)}
-                    className="pl-10 pr-10 w-48"
-                  />
-                  {selectedDate && (
-                    <button
-                      onClick={() => setSelectedDate(null)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Tabs and Table Container */}
           <div className="flex-1 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-0">
             {/* Date Display */}
@@ -349,64 +405,86 @@ const App = () => {
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                 Showing records: {' '}
                 <span className="text-slate-900 dark:text-white font-semibold">
-                  {selectedDate ? moment(selectedDate).format('MMMM DD, YYYY') : 'All Time'}
+                  {startDate || endDate 
+                    ? `${startDate ? moment(startDate).format('MMM DD, YYYY') : 'Beginning'} to ${endDate ? moment(endDate).format('MMM DD, YYYY') : 'Now'}`
+                    : 'All Time'
+                  }
                 </span>
-                {selectedDate && (
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="ml-3 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 font-medium"
-                  >
-                    View All Time
-                  </button>
-                )}
+                {' '}({filteredLogs.length} records)
               </p>
             </div>
 
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-              <Tabs value={filterTab} onValueChange={handleTabChange}>
-                <TabsList>
-                  <TabsTrigger 
-                    value="all" 
-                    active={filterTab === 'all'}
-                    onClick={() => handleTabChange('all')}
+              <div className="flex items-center justify-between">
+                <Tabs value={filterTab} onValueChange={handleTabChange}>
+                  <TabsList>
+                    <TabsTrigger 
+                      value="all" 
+                      active={filterTab === 'all'}
+                      onClick={() => handleTabChange('all')}
+                      disabled={processing}
+                    >
+                      All Scans
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="boarder" 
+                      active={filterTab === 'boarder'}
+                      onClick={() => handleTabChange('boarder')}
+                      disabled={processing}
+                    >
+                      Boarders
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="non-boarder" 
+                      active={filterTab === 'non-boarder'}
+                      onClick={() => handleTabChange('non-boarder')}
+                      disabled={processing}
+                    >
+                      Non-Boarders
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="late" 
+                      active={filterTab === 'late'}
+                      onClick={() => handleTabChange('late')}
+                      disabled={processing}
+                    >
+                      Late Entries
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="invalid" 
+                      active={filterTab === 'invalid'}
+                      onClick={() => handleTabChange('invalid')}
+                      disabled={processing}
+                    >
+                      Invalid
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleViewModeChange('table')}
+                    className="gap-2"
                     disabled={processing}
                   >
-                    All Scans
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="boarder" 
-                    active={filterTab === 'boarder'}
-                    onClick={() => handleTabChange('boarder')}
+                    <List size={16} />
+                    Table
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleViewModeChange('grid')}
+                    className="gap-2"
                     disabled={processing}
                   >
-                    Boarders
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="non-boarder" 
-                    active={filterTab === 'non-boarder'}
-                    onClick={() => handleTabChange('non-boarder')}
-                    disabled={processing}
-                  >
-                    Non-Boarders
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="late" 
-                    active={filterTab === 'late'}
-                    onClick={() => handleTabChange('late')}
-                    disabled={processing}
-                  >
-                    Late Entries
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="invalid" 
-                    active={filterTab === 'invalid'}
-                    onClick={() => handleTabChange('invalid')}
-                    disabled={processing}
-                  >
-                    Invalid
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                    <LayoutGrid size={16} />
+                    Cards
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div className="flex-1 relative min-h-138 overflow-hidden">
@@ -453,13 +531,23 @@ const App = () => {
                 </div>
               ) : (
                 <div className=" max-h-138 overflow-auto">
-                  <LogsTable
-                    logs={sortedLogs}
-                    allotments={allotments}
-                    onRowClick={(log) => setSelectedLog(log)}
-                    sortConfig={sortConfig}
-                    onSort={handleSort}
-                  />
+                  {viewMode === 'table' ? (
+                    <LogsTable
+                      logs={sortedLogs}
+                      allotments={allotments}
+                      onRowClick={(log) => setSelectedLog(log)}
+                      sortConfig={sortConfig}
+                      onSort={handleSort}
+                    />
+                  ) : (
+                    <div className="p-6">
+                      <LogsGrid
+                        logs={sortedLogs}
+                        allotments={allotments}
+                        onRowClick={(log) => setSelectedLog(log)}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -474,6 +562,14 @@ const App = () => {
           onClose={() => setSelectedLog(null)}
         />
       )}
+
+      <DateRangeModal
+        isOpen={isDateModalOpen}
+        onClose={() => setIsDateModalOpen(false)}
+        onApply={handleDateRangeApply}
+        currentStartDate={startDate}
+        currentEndDate={endDate}
+      />
     </div>
   );
 };
