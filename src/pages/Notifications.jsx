@@ -94,7 +94,7 @@ const Notifications = ({ isMobile }) => {
         }
       />
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-3 md:p-6 pb-20 md:pb-6">
         <div className="space-y-3">
           {notifications.map((notification) => (
             <Card 

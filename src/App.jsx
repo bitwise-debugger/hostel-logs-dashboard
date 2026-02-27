@@ -420,7 +420,7 @@ const App = () => {
           }
         />
 
-        <div className="flex-1 overflow-hidden p-3 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex-1 overflow-hidden p-3 md:p-6 space-y-4 md:space-y-6 pb-20 md:pb-6">
           {/* Mobile Date Filter Button */}
           {isMobile && (
             <div className="flex gap-2">

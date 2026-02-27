@@ -67,7 +67,7 @@ const Students = ({ allotments, isMobile }) => {
 
   return (
     <div className="p-3 flex-1 flex flex-col overflow-hidden">
-      <div className="p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto pb-20 md:pb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Student Allotments</h1>
         <p className="text-sm text-slate-500 mt-1">View and manage student hostel allotments</p>
       </div>

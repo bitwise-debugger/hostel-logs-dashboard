@@ -1,0 +1,5 @@
+This is a placeholder. Replace with actual 192x192 PNG icon.
+For now, you can create icons using:
+1. Online tools like https://realfavicongenerator.net/
+2. Or use any image editor to create 192x192 and 512x512 PNG files
+3. Use your app logo with cyan (#06b6d4) theme color

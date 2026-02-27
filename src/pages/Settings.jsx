@@ -45,7 +45,7 @@ const Settings = ({ isMobile }) => {
         description="Configure application settings and file paths"
       />
 
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="flex-1 overflow-auto p-3 md:p-6 space-y-4 md:space-y-6 pb-20 md:pb-6">
         <Card>
         <CardHeader>
           <CardTitle>Data Source Configuration</CardTitle>
