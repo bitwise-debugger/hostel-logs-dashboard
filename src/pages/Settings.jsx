@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { toast } from '../components/ui/toast';
 import PageHeader from '../components/PageHeader';
 
-const Settings = () => {
+const Settings = ({ isMobile }) => {
   const [scanLogsPath, setScanLogsPath] = useState('');
   const [allotmentsPath, setAllotmentsPath] = useState('');
   const [lateEntryHour, setLateEntryHour] = useState('22');

@@ -2,7 +2,7 @@ import { Users, LayoutDashboard, Settings, FileText, Bell, ChevronLeft, ChevronR
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 
-const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
+const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, isMobile, onMobileClose }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -26,6 +26,13 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
     }
   };
 
+  const handleMenuClick = (id) => {
+    setActiveTab(id);
+    if (isMobile && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'students', icon: Users, label: 'Students' },
@@ -34,6 +41,37 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
+  // Mobile Bottom Dock
+  if (isMobile) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shadow-lg">
+        <nav className="flex items-center justify-around px-2 py-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleMenuClick(item.id)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors min-w-[60px]",
+                  isActive
+                    ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-400"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-50"
+                )}
+              >
+                <Icon size={20} />
+                <span className="text-[10px]">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
+  // Desktop Sidebar
   return (
     <div className={cn(
       "bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen transition-all duration-300",
@@ -69,7 +107,7 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed }) => {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleMenuClick(item.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive

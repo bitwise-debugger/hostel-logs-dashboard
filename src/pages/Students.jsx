@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectItem } from '../components/ui/select';
 
-const Students = ({ allotments }) => {
+const Students = ({ allotments, isMobile }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedHostel, setSelectedHostel] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
@@ -66,8 +66,8 @@ const Students = ({ allotments }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden p-6 space-y-6">
-      <div>
+    <div className="p-3 flex-1 flex flex-col overflow-hidden">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6 overflow-auto">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Student Allotments</h1>
         <p className="text-sm text-slate-500 mt-1">View and manage student hostel allotments</p>
       </div>
@@ -156,7 +156,7 @@ const Students = ({ allotments }) => {
       </Card>
 
       {/* Students Grid */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 mt-3 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map((student, index) => (
             <Card key={index} className="hover:shadow-md transition-shadow">

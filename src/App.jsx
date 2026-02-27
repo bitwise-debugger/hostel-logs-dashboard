@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Papa from 'papaparse';
 import moment from 'moment';
 import { Clock, Users, ShieldAlert, AlertTriangle, Search, Calendar, LayoutGrid, List } from 'lucide-react';
+import { cn } from './lib/utils';
 
 import Sidebar from './components/Sidebar';
 import PageHeader from './components/PageHeader';
@@ -36,6 +37,24 @@ const App = () => {
   const [endDate, setEndDate] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarCollapsed(true);
+        setViewMode('grid'); // Force grid view on mobile
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -305,104 +324,156 @@ const App = () => {
   if (activeTab !== 'dashboard') {
     return (
       <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
-        <Sidebar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab}
-          collapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {activeTab === 'students' && <Students allotments={allotments} />}
-          {activeTab === 'reports' && <Reports logs={logs} />}
-          {activeTab === 'notifications' && <Notifications />}
-          {activeTab === 'settings' && <Settings />}
+        {!isMobile && (
+          <Sidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab}
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+            isMobile={isMobile}
+            onMobileClose={() => setMobileMenuOpen(false)}
+          />
+        )}
+        
+        <div className={cn(
+          "flex-1 flex flex-col overflow-hidden",
+          isMobile && "pb-16"
+        )}>
+          {activeTab === 'students' && <Students allotments={allotments} isMobile={isMobile} />}
+          {activeTab === 'reports' && <Reports logs={logs} allotments={allotments} isMobile={isMobile} />}
+          {activeTab === 'notifications' && <Notifications isMobile={isMobile} />}
+          {activeTab === 'settings' && <Settings isMobile={isMobile} />}
         </div>
+
+        {isMobile && (
+          <Sidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab}
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+            isMobile={isMobile}
+            onMobileClose={() => setMobileMenuOpen(false)}
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab}
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-      />
+      {!isMobile && (
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+          isMobile={isMobile}
+          onMobileClose={() => setMobileMenuOpen(false)}
+        />
+      )}
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col overflow-hidden",
+        isMobile && "pb-16"
+      )}>
         <PageHeader 
           title="Dashboard" 
           description="Monitor and manage hostel scan entries"
           search={
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full md:w-auto">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <Input
                   type="text"
-                  placeholder="Search by name or roll number..."
+                  placeholder={isMobile ? "Search..." : "Search by name or roll number..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleKeyPress}
                   className="pl-10"
                 />
               </div>
-              <Button onClick={handleSearch}>
-                Search
-              </Button>
-            </div>
-          }
-          actions={
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsDateModalOpen(true)}
-                className="gap-2"
-              >
-                <Calendar size={16} />
-                {startDate || endDate ? 'Change Date Range' : 'Select Date Range'}
-              </Button>
-              {(startDate || endDate) && (
-                <Button variant="outline" onClick={clearDateRange}>
-                  View All Scans
+              {!isMobile && (
+                <Button onClick={handleSearch}>
+                  Search
                 </Button>
               )}
             </div>
           }
+          actions={
+            !isMobile && (
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDateModalOpen(true)}
+                  className="gap-2"
+                >
+                  <Calendar size={16} />
+                  {startDate || endDate ? 'Change Date Range' : 'Select Date Range'}
+                </Button>
+                {(startDate || endDate) && (
+                  <Button variant="outline" onClick={clearDateRange}>
+                    View All Scans
+                  </Button>
+                )}
+              </div>
+            )
+          }
         />
 
-        <div className="flex-1 overflow-hidden p-6 space-y-6">
-          {/* Static Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              label="Total Scans"
-              value={stats.totalScans}
-              icon={Users}
-            />
-            <StatsCard
-              label="Peak Time"
-              value={stats.peakTime}
-              icon={Clock}
-              description="Busiest hour"
-            />
-            <StatsCard
-              label="Late Entries"
-              value={stats.lateEntries}
-              icon={AlertTriangle}
-              description="After 10:00 PM"
-            />
-            <StatsCard
-              label="Invalid Scans"
-              value={stats.invalid}
-              icon={ShieldAlert}
-            />
-          </div>
+        <div className="flex-1 overflow-hidden p-3 md:p-6 space-y-4 md:space-y-6">
+          {/* Mobile Date Filter Button */}
+          {isMobile && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsDateModalOpen(true)}
+                className="gap-2 flex-1"
+                size="sm"
+              >
+                <Calendar size={16} />
+                {startDate || endDate ? 'Change Range' : 'Date Range'}
+              </Button>
+              {(startDate || endDate) && (
+                <Button variant="outline" onClick={clearDateRange} size="sm">
+                  Clear
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Static Stats Cards - Hidden on Mobile */}
+          {!isMobile && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              <StatsCard
+                label="Total Scans"
+                value={stats.totalScans}
+                icon={Users}
+              />
+              <StatsCard
+                label="Peak Time"
+                value={stats.peakTime}
+                icon={Clock}
+                description="Busiest hour"
+              />
+              <StatsCard
+                label="Late Entries"
+                value={stats.lateEntries}
+                icon={AlertTriangle}
+                description="After 10:00 PM"
+              />
+              <StatsCard
+                label="Invalid Scans"
+                value={stats.invalid}
+                icon={ShieldAlert}
+              />
+            </div>
+          )}
 
           {/* Tabs and Table Container */}
           <div className="flex-1 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-0">
             {/* Date Display */}
-            <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <div className="px-3 md:px-6 py-2 md:py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+              <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">
                 Showing records: {' '}
                 <span className="text-slate-900 dark:text-white font-semibold">
                   {startDate || endDate 
@@ -414,76 +485,86 @@ const App = () => {
               </p>
             </div>
 
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <Tabs value={filterTab} onValueChange={handleTabChange}>
-                  <TabsList>
-                    <TabsTrigger 
-                      value="all" 
-                      active={filterTab === 'all'}
-                      onClick={() => handleTabChange('all')}
-                      disabled={processing}
-                    >
-                      All Scans
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="boarder" 
-                      active={filterTab === 'boarder'}
-                      onClick={() => handleTabChange('boarder')}
-                      disabled={processing}
-                    >
-                      Boarders
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="non-boarder" 
-                      active={filterTab === 'non-boarder'}
-                      onClick={() => handleTabChange('non-boarder')}
-                      disabled={processing}
-                    >
-                      Non-Boarders
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="late" 
-                      active={filterTab === 'late'}
-                      onClick={() => handleTabChange('late')}
-                      disabled={processing}
-                    >
-                      Late Entries
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="invalid" 
-                      active={filterTab === 'invalid'}
-                      onClick={() => handleTabChange('invalid')}
-                      disabled={processing}
-                    >
-                      Invalid
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-
-                {/* View Toggle */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === 'table' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewModeChange('table')}
-                    className="gap-2"
-                    disabled={processing}
-                  >
-                    <List size={16} />
-                    Table
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleViewModeChange('grid')}
-                    className="gap-2"
-                    disabled={processing}
-                  >
-                    <LayoutGrid size={16} />
-                    Cards
-                  </Button>
+            <div className="p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                {/* Scrollable Tabs on Mobile */}
+                <div className="flex-1 overflow-x-auto">
+                  <Tabs value={filterTab} onValueChange={handleTabChange}>
+                    <TabsList className="w-full md:w-auto">
+                      <TabsTrigger 
+                        value="all" 
+                        active={filterTab === 'all'}
+                        onClick={() => handleTabChange('all')}
+                        disabled={processing}
+                        className="text-xs md:text-sm whitespace-nowrap"
+                      >
+                        All
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="boarder" 
+                        active={filterTab === 'boarder'}
+                        onClick={() => handleTabChange('boarder')}
+                        disabled={processing}
+                        className="text-xs md:text-sm whitespace-nowrap"
+                      >
+                        Boarders
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="non-boarder" 
+                        active={filterTab === 'non-boarder'}
+                        onClick={() => handleTabChange('non-boarder')}
+                        disabled={processing}
+                        className="text-xs md:text-sm whitespace-nowrap"
+                      >
+                        Non-Boarders
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="late" 
+                        active={filterTab === 'late'}
+                        onClick={() => handleTabChange('late')}
+                        disabled={processing}
+                        className="text-xs md:text-sm whitespace-nowrap"
+                      >
+                        Late
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="invalid" 
+                        active={filterTab === 'invalid'}
+                        onClick={() => handleTabChange('invalid')}
+                        disabled={processing}
+                        className="text-xs md:text-sm whitespace-nowrap"
+                      >
+                        Invalid
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
+
+                {/* View Toggle - Hidden on Mobile */}
+                {!isMobile && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleViewModeChange('table')}
+                      className="gap-2"
+                      disabled={processing}
+                    >
+                      <List size={16} />
+                      Table
+                    </Button>
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleViewModeChange('grid')}
+                      className="gap-2"
+                      disabled={processing}
+                    >
+                      <LayoutGrid size={16} />
+                      Cards
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -570,6 +651,17 @@ const App = () => {
         currentStartDate={startDate}
         currentEndDate={endDate}
       />
+
+      {isMobile && (
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+          isMobile={isMobile}
+          onMobileClose={() => setMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 };

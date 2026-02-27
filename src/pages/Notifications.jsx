@@ -4,7 +4,7 @@ import { Badge } from '../components/ui/badge';
 import moment from 'moment';
 import PageHeader from '../components/PageHeader';
 
-const Notifications = () => {
+const Notifications = ({ isMobile }) => {
   const notifications = [
     {
       id: 1,
