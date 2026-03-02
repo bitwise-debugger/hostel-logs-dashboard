@@ -2,7 +2,7 @@ import { Users, LayoutDashboard, Settings, FileText, Bell, ChevronLeft, ChevronR
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 
-const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, isMobile, onMobileClose }) => {
+const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, isMobile, onMobileClose, onLogout }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -140,7 +140,7 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, isMobile, o
         })}
       </nav>
 
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
         <button
           onClick={toggleDarkMode}
           className={cn(
@@ -152,6 +152,19 @@ const Sidebar = ({ activeTab, setActiveTab, collapsed, setCollapsed, isMobile, o
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           {!collapsed && <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/20 dark:hover:text-red-300",
+              collapsed && "justify-center"
+            )}
+            title={collapsed ? 'Logout' : undefined}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            {!collapsed && <span>Logout</span>}
+          </button>
+        )}
       </div>
     </div>
   );

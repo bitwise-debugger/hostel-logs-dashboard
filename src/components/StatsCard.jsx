@@ -1,8 +1,27 @@
 import { Card, CardContent } from './ui/card';
+import { cn } from '../lib/utils';
 
-const StatsCard = ({ label, value, icon: Icon, description }) => {
+const StatsCard = ({ label, value, icon: Icon, description, variant = 'default' }) => {
+  const variants = {
+    default: 'bg-white dark:bg-slate-950',
+    warning: 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800',
+    danger: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+  };
+
+  const iconBgColors = {
+    default: 'bg-cyan-50 dark:bg-cyan-950',
+    warning: 'bg-yellow-100 dark:bg-yellow-900/30',
+    danger: 'bg-red-100 dark:bg-red-900/30'
+  };
+
+  const iconColors = {
+    default: 'text-cyan-600 dark:text-cyan-400',
+    warning: 'text-yellow-600 dark:text-yellow-400',
+    danger: 'text-red-600 dark:text-red-400'
+  };
+
   return (
-    <Card>
+    <Card className={cn(variants[variant])}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -18,8 +37,8 @@ const StatsCard = ({ label, value, icon: Icon, description }) => {
               </p>
             )}
           </div>
-          <div className="ml-4 p-3 bg-cyan-50 dark:bg-cyan-950 rounded-lg">
-            <Icon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+          <div className={cn("ml-4 p-3 rounded-lg", iconBgColors[variant])}>
+            <Icon className={cn("w-6 h-6", iconColors[variant])} />
           </div>
         </div>
       </CardContent>
